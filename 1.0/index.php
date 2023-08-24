@@ -102,7 +102,10 @@ if (!isset($_COOKIE['session_id'])) {
     color: #f00;        /* Change the text color when hovering */
 }
 
-
+button:disabled {
+    background-color: #ccc; /* Light grey background */
+    cursor: not-allowed; /* Cursor indicating not clickable */
+}
 
 </style>
    <script type='text/javascript'>
@@ -118,10 +121,9 @@ if (!isset($_COOKIE['session_id'])) {
     }
     
     function toggleClaudeModal() {
-    var modal = document.getElementById("claude-modal");
-    modal.style.display = modal.style.display === "block" ? "none" : "block";
-}
-
+        var modal = document.getElementById("claude-modal");
+        modal.style.display = modal.style.display === "block" ? "none" : "block";
+    }
 
     function saveAdvancedOptions(event) {
         event.preventDefault();
@@ -133,115 +135,114 @@ if (!isset($_COOKIE['session_id'])) {
         document.getElementById('advanced-options-modal').style.display = 'none';
     }
 
-   window.onload = function() {
-    document.getElementById('searchButton').addEventListener('click', function(event) {
-        event.preventDefault();
-        var mediaType = document.getElementById('selectedMediaType').value;
-        if (mediaType !== 'movie' && mediaType !== 'tv') {
-            alert("Invalid media type. Please select either a movie or TV show.");
-            return;
+    window.onload = function() {
+        document.getElementById('searchButton').addEventListener('click', function(event) {
+            event.preventDefault();
+            var mediaType = document.getElementById('selectedMediaType').value;
+            if (mediaType !== 'movie' && mediaType !== 'tv') {
+                alert("Invalid media type. Please select either a movie or TV show.");
+                return;
+            }
+
+            var searchTerm = mediaType === 'movie' ? document.getElementById('searchMovieTerm').value : document.getElementById('searchTVShowTerm').value;
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'search.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+    if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+        var results = JSON.parse(this.responseText);
+        var dropdown = document.getElementById('movie-results');
+
+        // Check if results are empty
+        if (results.results.length === 0) {
+            dropdown.classList.add('hidden'); // Hide the dropdown
+        } else {
+            dropdown.classList.remove('hidden'); // Show the dropdown
         }
 
-        var searchTerm = mediaType === 'movie' ? document.getElementById('searchMovieTerm').value : document.getElementById('searchTVShowTerm').value;
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'search.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onreadystatechange = function() {
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                var results = JSON.parse(this.responseText);
-                var dropdown = document.getElementById('movie-results');
+        dropdown.innerHTML = '';
+        results.results.forEach(function(result) {
+            var option = document.createElement('option');
+            var title = mediaType === 'movie' ? result.title : result.name;
+            var year = mediaType === 'movie' ? result.release_date.split('-')[0] : result.first_air_date.split('-')[0];
+            var tmdbId = result.id; // Store the TMDB ID
+            option.value = tmdbId;
+            option.textContent = title + ' (' + year + ')';
+            dropdown.appendChild(option);
+        });
 
-                // Check if results are empty
-                if (results.results.length === 0) {
-                    dropdown.classList.add('hidden'); // Hide the dropdown
-                } else {
-                    dropdown.classList.remove('hidden'); // Show the dropdown
-                }
+        // Enable the download button after the results are populated
+        document.getElementById('downloadButton').disabled = false;
+    }
+};
 
-                dropdown.innerHTML = '';
-                results.results.forEach(function(result) {
-                    var option = document.createElement('option');
-                    var title = mediaType === 'movie' ? result.title : result.name;
-                    var year = mediaType === 'movie' ? result.release_date.split('-')[0] : result.first_air_date.split('-')[0];
-                    var tmdbId = result.id; // Store the TMDB ID
-                    option.value = tmdbId;
-                    option.textContent = title + ' (' + year + ')';
-                    dropdown.appendChild(option);
-                });
-            }
-        };
-        xhr.send('mediaType=' + mediaType + '&searchTerm=' + searchTerm);
-    });
+            xhr.send('mediaType=' + mediaType + '&searchTerm=' + searchTerm);
+        });
 
-    document.getElementById('movie').addEventListener('change', function() {
-    document.getElementById('selectedMediaType').value = 'movie';
-    document.getElementById('movieSearch').style.display = 'block';
-    document.getElementById('tvSearch').style.display = 'none';
-});
-document.getElementById('tv').addEventListener('change', function() {
-    document.getElementById('selectedMediaType').value = 'tv';
-    document.getElementById('tvSearch').style.display = 'block';
-    document.getElementById('movieSearch').style.display = 'none';
-});
-
+        document.getElementById('movie').addEventListener('change', function() {
+            document.getElementById('selectedMediaType').value = 'movie';
+            document.getElementById('movieSearch').style.display = 'block';
+            document.getElementById('tvSearch').style.display = 'none';
+        });
+        document.getElementById('tv').addEventListener('change', function() {
+            document.getElementById('selectedMediaType').value = 'tv';
+            document.getElementById('tvSearch').style.display = 'block';
+            document.getElementById('movieSearch').style.display = 'none';
+        });
 
         document.getElementById('downloadButton').addEventListener('click', function(event) {
-    event.preventDefault(); // Prevent default behavior
-    var selectedTMDBId = document.getElementById('movie-results').value;
-    var selectedMediaType = document.getElementById('selectedMediaType').value;
-    var seasonNumber = selectedMediaType === 'tv' ? document.getElementById('tvSeason').value : null;
-    var episodeNumber = selectedMediaType === 'tv' ? document.getElementById('tvEpisode').value : null;
+            event.preventDefault(); // Prevent default behavior
+            var selectedTMDBId = document.getElementById('movie-results').value;
+            var selectedMediaType = document.getElementById('selectedMediaType').value;
+            var seasonNumber = selectedMediaType === 'tv' ? document.getElementById('tvSeason').value : null;
+            var episodeNumber = selectedMediaType === 'tv' ? document.getElementById('tvEpisode').value : null;
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'download.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.responseType = 'blob';
-    xhr.onreadystatechange = function() {
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-            var blob = new Blob([this.response], { type: 'text/plain;charset=UTF-8' });
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'subtitle.txt'; // Set the download filename with .txt extension
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-    };
-    xhr.send('selectedTMDBId=' + selectedTMDBId + '&mediaType=' + selectedMediaType + '&seasonNumber=' + seasonNumber + '&episodeNumber=' + episodeNumber);
-});
-
-
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'download.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.responseType = 'blob';
+            xhr.onreadystatechange = function() {
+                if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                    var blob = new Blob([this.response], { type: 'text/plain;charset=UTF-8' });
+                    var url = window.URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'subtitle.txt'; // Set the download filename with .txt extension
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
             };
+            xhr.send('selectedTMDBId=' + selectedTMDBId + '&mediaType=' + selectedMediaType + '&seasonNumber=' + seasonNumber + '&episodeNumber=' + episodeNumber);
+        });
+    };
 
-
-window.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('.close').addEventListener('click', function() {
-        document.querySelector('.modal').style.display = 'none'; // Hide the modal
+    window.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('.close').addEventListener('click', function() {
+            document.querySelector('.modal').style.display = 'none'; // Hide the modal
+        });
     });
-});
 
-// The actual prompt text you want to copy
-var promptText = "Divide this subtitle file into the major acts or movements of the full video, include a descriptive name and 4-5 sentence description for each act, and the timecodes marking the beginning and end. Include 1 unique act per 15 minutes.";
+    // The actual prompt text you want to copy
+    var promptText = "Divide this subtitle file into the major acts or movements of the full video, include a descriptive name and 4-5 sentence description for each act, and the timecodes marking the beginning and end. Include 1 unique act per 15 minutes.";
 
-function copyPromptToClipboard() {
-    // Create a temporary textarea element to hold the text
-    var textarea = document.createElement('textarea');
-    textarea.value = promptText; // Use the promptText variable here
-    document.body.appendChild(textarea);
+    function copyPromptToClipboard() {
+        // Create a temporary textarea element to hold the text
+        var textarea = document.createElement('textarea');
+        textarea.value = promptText; // Use the promptText variable here
+        document.body.appendChild(textarea);
 
-    // Select the text in the textarea
-    textarea.select();
-    document.execCommand('copy');
+        // Select the text in the textarea
+        textarea.select();
+        document.execCommand('copy');
 
-    // Remove the temporary textarea
-    document.body.removeChild(textarea);
+        // Remove the temporary textarea
+        document.body.removeChild(textarea);
 
-    // Optional: Show a message to the user
-    alert('Prompt copied to clipboard!');
-}
-
-
+        // Optional: Show a message to the user
+        alert('Prompt copied to clipboard!');
+    }
 </script>
+
 
 
 </head>
@@ -313,7 +314,7 @@ function copyPromptToClipboard() {
             </div>
             <select id="movie-results" name="selectedMovie"></select><br><br>
             <div><br>
-                <button type="submit" id="searchButton">Search</button>&nbsp;&nbsp;&nbsp;<button type="button" id="downloadButton">Download</button><br><br>
+                <button type="submit" id="searchButton">Search</button>&nbsp;&nbsp;&nbsp;<button type="button" id="downloadButton" disabled>Download</button><br><br>
             </div>
         </form>
     </div>
