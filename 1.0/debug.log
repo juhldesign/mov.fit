@@ -1,0 +1,18 @@
+Constructed Filename: Guardians of the Galaxy Volume 3.txt
+Constructed Filename: Guardians of the Galaxy Volume 3.txt
+Constructed Filename: Guardians of the Galaxy Volume 3.txt
+Final Filename: Guardians of the Galaxy Volume 3.txt
+Headers Sent: Array
+(
+    [0] => X-Powered-By: PHP/7.2.34
+    [1] => Content-Description: File Transfer
+    [2] => Content-Type: text/plain;charset=UTF-8
+    [3] => Content-Disposition: attachment; filename="Guardians of the Galaxy Volume 3.txt"
+    [4] => Expires: 0
+    [5] => Cache-Control: must-revalidate
+    [6] => Pragma: public
+    [7] => Content-Length: 104943
+)
+
+Final Filename: Guardians of the Galaxy Volume 3.txt
+Error: Invalid media type. Received mediaType: ''
